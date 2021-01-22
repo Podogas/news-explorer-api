@@ -1,7 +1,6 @@
 const articleRoutes = require('express').Router();
 const { celebrate, Joi } = require('celebrate');
 
-
 const { getSavedArticles, postArticle, deleteSavedArticle } = require('../controllers/articles.js');
 
 articleRoutes.get('/articles', getSavedArticles);
@@ -15,11 +14,8 @@ articleRoutes.post('/articles', celebrate({
     source: Joi.string().required(),
     link: Joi.string().required(),
     image: Joi.string().required(),
-    // id
-    // если указывать здесь владельца, то он требует что бы в теле был владелец
-    //owner: Joi.string().required().hex()
   }),
-}), postArticle)
+}), postArticle);
 
 articleRoutes.delete('/articles/:_id', celebrate({
   params: Joi.object().keys({
@@ -27,6 +23,4 @@ articleRoutes.delete('/articles/:_id', celebrate({
   }),
 }), deleteSavedArticle);
 
-
 module.exports = articleRoutes;
-

@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const { isUrl } = require('../utils/validate.js');
 const NotFoundErr = require('../errors/NotFoundErr.js');
 const ForbiddenErr = require('../errors/ForbiddenErr.js');
-
+const { reqErrors, validationErrors } = require('../utils/errorMessages');
 
 const articleSchema = new mongoose.Schema({
   keyword: {
@@ -28,12 +28,12 @@ const articleSchema = new mongoose.Schema({
   link: {
     type: String,
     required: true,
-    validate: [isUrl, 'Указан некорректный URL'],
+    validate: [isUrl, validationErrors.url.LINK_MESSAGE],
   },
   image: {
     type: String,
     required: true,
-    validate: [isUrl, 'Указан некорректный URL'],
+    validate: [isUrl, validationErrors.url.IMAGE_MESSAGE],
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
@@ -41,18 +41,17 @@ const articleSchema = new mongoose.Schema({
     required: true,
     select: false,
   },
-})
+});
 
-
-articleSchema.statics.ownerArticleDeletion = function del (articleId, ownerId) {
+articleSchema.statics.ownerArticleDeletion = function del(articleId, ownerId) {
   return (this.findById(articleId)
     .select('+owner')
     .then((article) => {
       if (!article) {
-        throw new NotFoundErr('Статья не найдена')
+        throw new NotFoundErr(reqErrors.notFound.ARTICLE_MESSAGE);
       }
       if (article.owner.toString() !== ownerId) {
-      throw new ForbiddenErr('Запрещено')
+        throw new ForbiddenErr(reqErrors.forbidden.ARTICLE_MESSAGE);
       }
       return article.remove();
     })
@@ -61,4 +60,3 @@ articleSchema.statics.ownerArticleDeletion = function del (articleId, ownerId) {
 };
 
 module.exports = mongoose.model('article', articleSchema);
-

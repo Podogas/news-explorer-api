@@ -1,16 +1,16 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const { isEmail } = require('../utils/validate.js');
-const NotFoundErr =require('../errors/NotFoundErr.js');
+const NotFoundErr = require('../errors/NotFoundErr.js');
+const { reqErrors, validationErrors } = require('../utils/errorMessages');
 
 const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    validate: [isEmail, 'Указан некорректный Email'],
+    validate: [isEmail, validationErrors.email.EMAIL_MESSAGE],
     unique: true,
   },
-  // принимать только хэш пароля
   password: {
     type: String,
     required: true,
@@ -21,21 +21,20 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: 2,
     maxlength: 30,
-  }
-})
+  },
+});
 
 userSchema.statics.findUserByCredentials = function findUser(email, password) {
   return this.findOne({ email })
     .select('+password')
     .then((user) => {
       if (!user) {
-        throw new NotFoundErr('Пользователя с таким Email не найдено, или не верный пароль !user')
-
+        throw new NotFoundErr(reqErrors.notFound.AUTH_MESSAGE);
       }
 
       return bcrypt.compare(password, user.password).then((matched) => {
         if (!matched) {
-          throw new NotFoundErr('Пользователя с таким Email не найдено, или не верный пароль !matched')
+          throw new NotFoundErr(reqErrors.notFound.AUTH_MESSAGE);
         }
         return user;
       });

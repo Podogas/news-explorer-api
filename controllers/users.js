@@ -1,8 +1,10 @@
-const User = require('../models/user.js');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const User = require('../models/user.js');
+const ConflictErr = require('../errors/ConflictErr.js');
+const { reqErrors } = require('../utils/errorMessages.js');
+
 const { NODE_ENV, JWT_SECRET } = process.env;
-const UnauthorizedErr =require('../errors/UnauthorizedErr.js');
 
 module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
@@ -25,21 +27,26 @@ module.exports.createUser = (req, res, next) => {
     .then((hash) => User.create({
       email,
       password: hash,
-      name
+      name,
     }))
     .then((user) => res.send(user))
-    .catch(next)
+    .catch((err) => {
+      if (err.code === reqErrors.conflict.MONGO_ERROR_CODE) {
+        const error = new ConflictErr(reqErrors.conflict.REGISTRATION_MESSAGE);
+        next(error);
+      }
+    });
 };
 
 module.exports.getUserInfo = (req, res, next) => {
-  User.findOne({_id:req.user._id})
-  .then((user) => {
-    res.send(
-      {
-        email: user.email,
-        name: user.name
-      }
-    )
-  })
-  .catch(next)
-}
+  User.findOne({ _id: req.user._id })
+    .then((user) => {
+      res.send(
+        {
+          email: user.email,
+          name: user.name,
+        },
+      );
+    })
+    .catch(next);
+};
